@@ -1,0 +1,25 @@
+{
+  "name": "proyecto-primer-sprint",
+  "version": "0.0.1",
+  "description": "Primer proyecto de sprints de Acámica: Programación Web Backend. Es una API para gestionar un restaurante llamado Deliah-Resto",
+  "main": "index.js",
+  "scripts": {
+    "run": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/augustolallana/proyecto-primer-sprint.git"
+  },
+  "keywords": [
+    "acamica",
+    "nodejs",
+    "express",
+    "sprintproyect"
+  ],
+  "author": "Augusto Lallana",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/augustolallana/proyecto-primer-sprint/issues"
+  },
+  "homepage": "https://github.com/augustolallana/proyecto-primer-sprint#readme"
+}
