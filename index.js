@@ -10,10 +10,18 @@ const PORT = 5000
 
 server.use(express.json())
 
-server.post("/signup", (req, res) => {
+// ------------------
+server.get("/", (req, res) => {
+    res.json(arrayUsuarios)
+})
+// ------------------
+
+server.post("/signup", mw.validarDatosRegistro, (req, res) => {
+    res.status(201).json({ mensaje: "Usuario creado con éxito" })
 })
 
-server.post("/login", (req, res) => {
+server.post("/login", mw.validarDatosLogin, (req, res) => {
+    res.status(200).json({ mensaje: `Usuario logueado con éxito, id = ${req.header("user-index")}`})
 })
 
 server.get("/gestionar", (req, res) => {
