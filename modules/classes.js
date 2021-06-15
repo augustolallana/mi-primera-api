@@ -11,26 +11,33 @@ class Usuario {
 }
 
 class Producto {
-    constructor (id, name, price, photo) { 
-        this.id = id
-        this.name = name
+    constructor (name, price, photo) { 
+        this.name = toLowerCase(name)
         this.price = price
         this.photo = photo
     }
 }
 
 class Pedido {
-    constructor (date, products, payment, adress, state) {
-        this.date = date
+    constructor (products, payment, adress, user) {
         this.products = products
         this.payment = payment
         this.adress = adress
-        this.state = state
+        this.user = user
+        this.date = Date.now()
+        this.state = "Pendiente"
+    }
+}
+
+class MetodoPago {
+    constructor (name) {
+        this.name = name
     }
 }
 
 module.exports = {
     Usuario: Usuario,
     Producto: Producto,
-    Pedido: Pedido
+    Pedido: Pedido,
+    MetodoPago: MetodoPago
 }
