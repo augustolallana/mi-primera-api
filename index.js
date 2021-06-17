@@ -1,3 +1,5 @@
+// Poner comentarios
+
 const express = require("express")
 const swaggerJsDocs = require("swagger-jsdoc")
 const swaggerUI = require("swagger-ui-express")
@@ -29,16 +31,16 @@ server.post("/signup", mw.validarDatosRegistro, (req, res) => {
 })
 
 server.post("/login", mw.validarDatosLogin, (req, res) => {
-    res.status(200).json({ mensaje: "Usuario logueado con éxito"})
+    res.status(200).json({ mensaje: `Usuario logueado con éxito. Id: ${mw.valorHeader}`})
 })
 
-// Admin / Usuario
+// Endpoints: Admin / Usuario
 server.get("/productos", mw.estaLogueado, (req, res) => {
     res.status(200).json(arrayProductos)
 })
 
 
-// Usuario
+// Endpoints: Usuario
 server.post("/pedidos/crear", mw.estaLogueado, mw.crearPedido, (req, res) => {
     res.status(200).json({ mensaje: "Operación realizada con éxito" })
 })
@@ -55,10 +57,11 @@ server.get("/pedidos/historial", mw.estaLogueado, mw.verHistorialPedidos, (req, 
 })
 
 server.get("/pedidos/estado", mw.estaLogueado, (req, res) => {
+    
 })
 
 
-// Admin
+// Endpoints: Admin
 server.post("/productos", mw.estaLogueado, mw.isAdmin, (req, res) => {
 })
 
@@ -87,7 +90,7 @@ server.delete("/medios-pago", mw.estaLogueado, mw.isAdmin, (req, res) => {
 })
 
 
-// Listen
+// Listen server
 server.listen(PORT, () => {
     console.log(`Servidor ejecutando en el puerto ${PORT}`)
 })

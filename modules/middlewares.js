@@ -4,49 +4,11 @@ const Producto = classes.Producto
 const Pedido = classes.Pedido
 const MetodoPago = classes.MetodoPago
 
-
-const admin = {
-    username:"admin",
-    password: "todopoderoso",
-    isAdmin: true
-}
-
-let arrayUsuarios = [admin]
-
-
-let productoTest0 = {
-    name: "pizza grande",
-    price: 500,
-    photo: "https://cdn.pixabay.com/photo/2017/12/09/08/18/pizza-3007395_960_720.jpg"
-}
-
-let productoTest1 = {
-    name: "bebida saborizada 500ml",
-    price: 85,
-    photo: "https://cdn.pixabay.com/photo/2019/09/19/14/30/frutichela-4489415_960_720.jpg"
-}
-
-let productoTest2 = {
-    name: "ensalada cesar",
-    price: 450,
-    photo: "https://cdn.pixabay.com/photo/2017/08/11/00/32/salad-2629262__480.jpg"
-}
-
-let arrayProductos = [productoTest0, productoTest1, productoTest2]
-
-
-let paymentMethod1 = {
-    name: "Tarjeta de crédito"
-}
-
-let paymentMethod2 = { 
-    name: "Efectivo"
-}
-
-let arrayMetodosPago = [paymentMethod1, paymentMethod2]
-
-
-let arrayPedidos = []
+const arrays = require("./arrays")
+const arrayUsuarios = arrays.arrayUsuarios  
+const arrayProductos = arrays.arrayProductos 
+const arrayPedidos = arrays.arrayPedidos 
+const arrayMetodosPago = arrays.arrayMetodosPago 
 
 
 const paramRegistradoRepetido = (param, req) => {
@@ -84,40 +46,27 @@ const validarDatosRegistro = (req, res, next) => {
 }
 
 let valorHeader = false
-
-const setHeader = (req, res, next) => {
-    req.headers["user-index"] = valorHeader
-    next()
-}
-
 const validarDatosLogin = (req, res, next) => {
-    delete req.headers["user-index"]
-    
     if (!req.body.username || !req.body.password) {
         res.status(400).json({ mensaje: "Debe completar todos los campos para ingresar" })
         return
     }
     
-    let usernames = arrayUsuarios.map((user) => {
-        return user.username
+    let user = arrayUsuarios.findIndex((user) => {
+        return (user.username === req.body.username) && (user.password === req.body.password)
     })
-    
-    let passwords = arrayUsuarios.map((user) => {
-        return user.password
-    })
-    
-    if (!usernames.includes(req.body.username) || !passwords.includes(req.body.password)) {
+
+    if (user === -1) {
         res.status(401).json({ mensaje: "Credenciales inválidas" })
         return
     }
-    
-    if (req.body.password !== passwords[usernames.indexOf(req.body.username)]) {
-        res.status(401).json({ mensaje: "Credenciales inválidas" })
-        return
-    }
+    valorHeader = user
+    console.log("dentro de funcion login despues de definir", valorHeader)
+    next()
+}
 
-    valorHeader = usernames.indexOf(req.body.username)
-
+const setHeader = (req, res, next) => {
+    req.headers["user-index"] = valorHeader
     next()
 }
 
@@ -143,6 +92,13 @@ const isAdmin = (req, res, next) => {
 }
 
 const crearPedido = (req, res, next) => {
+
+    
+    if ((arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")})) !== -1) {
+        res.status(400).json({ mensaje: "No puedes crear un nuevo pedido porque tienes otro pendiente por confirmar!" })
+        return
+    }
+
     if (!req.body.products) {
         res.status(400).json({ mensaje: "Debe agregar al menos un producto para realizar un pedido" })
         return
@@ -162,7 +118,7 @@ const crearPedido = (req, res, next) => {
         productosPedido.push(arrayProductos[nombresProductos.indexOf(req.body.products[i])])
     }
    
-    let pedido = new Pedido(productosPedido, req.body.payment || arrayMetodosPago[0].name, req.body.adress || arrayUsuarios[req.headers["user-index"]].adress, req.headers["user-index"])
+    let pedido = new Pedido(productosPedido, req.body.quantities || Array.from({length: req.body.products.length}).map(x => 1), req.body.payment || arrayMetodosPago[0].name, req.body.adress || arrayUsuarios[req.headers["user-index"]].adress, req.headers["user-index"])
     arrayPedidos.push(pedido)
     
     next()
@@ -198,6 +154,11 @@ const verHistorialPedidos = (req, res, next) => {
     next()
 }
 
+const verEstadoPedido = (req, res, next) => {
+
+}
+
+exports.valorHeader = valorHeader
 exports.arrayUsuarios = arrayUsuarios
 exports.arrayProductos = arrayProductos
 exports.validarDatosRegistro = validarDatosRegistro

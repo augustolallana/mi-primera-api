@@ -12,15 +12,16 @@ class Usuario {
 
 class Producto {
     constructor (name, price, photo) { 
-        this.name = toLowerCase(name)
+        this.name = name.toLowerCase()
         this.price = price
         this.photo = photo
     }
 }
 
 class Pedido {
-    constructor (products, payment, adress, user) {
+    constructor (products, quantities, payment, adress, user) {
         this.products = products
+        this.quantities = quantities
         this.payment = payment
         this.adress = adress
         this.user = user
