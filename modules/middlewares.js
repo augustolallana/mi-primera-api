@@ -60,8 +60,8 @@ const validarDatosLogin = (req, res, next) => {
         res.status(401).json({ mensaje: "Credenciales inválidas" })
         return
     }
+
     valorHeader = user
-    console.log("dentro de funcion login despues de definir", valorHeader)
     next()
 }
 
@@ -71,7 +71,6 @@ const setHeader = (req, res, next) => {
 }
 
 const estaLogueado = (req, res, next) => {
-    
     if (!req.headers["user-index"]) {
         if (req.headers["user-index"] !== 0) {
             res.status(401).json({ mensaje: "Debe estar logueado para realizar esta operacion"})
@@ -92,8 +91,6 @@ const isAdmin = (req, res, next) => {
 }
 
 const crearPedido = (req, res, next) => {
-
-    
     if ((arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")})) !== -1) {
         res.status(400).json({ mensaje: "No puedes crear un nuevo pedido porque tienes otro pendiente por confirmar!" })
         return
@@ -146,6 +143,7 @@ const confirmarPedido = (req, res, next) => {
 }
 
 const verHistorialPedidos = (req, res, next) => {
+    // Evaluar si el usuario tiene 
     if (arrayUsuarios[req.headers["user-index"]].historialPedidos.length === 0) {
         res.status(200).json({ mensaje: "Aún no has concretado ningún pedido." })
         return
@@ -154,13 +152,31 @@ const verHistorialPedidos = (req, res, next) => {
     next()
 }
 
-const verEstadoPedido = (req, res, next) => {
 
+const verEstadoPedido = (req, res, next) => {
+    let pedidosUsers = arrayPedidos.map((pedido) => {
+        return pedido.user
+    })
+
+    if (!pedidosUsers.includes(req.headers["user-index"])) {
+        res.status(404).json({ mensaje: "Todavía no has realizado ningún pedido" })
+        return
+    }
+    
+    // Evaluar si el usuario tiene pedido pendiente
+    if (arrayUsuarios[req.headers["user-index"]].historialPedidos.length === 0 || arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")}) !== -1) {
+        res.status(200).json({ mensaje: "El estado de tu pedido es Pendiente"})
+        return
+    }
+
+    next()
 }
 
 exports.valorHeader = valorHeader
 exports.arrayUsuarios = arrayUsuarios
 exports.arrayProductos = arrayProductos
+exports.arrayPedidos = arrayPedidos
+exports.arrayMetodosPago = arrayMetodosPago
 exports.validarDatosRegistro = validarDatosRegistro
 exports.setHeader = setHeader
 exports.validarDatosLogin = validarDatosLogin
@@ -169,3 +185,4 @@ exports.isAdmin = isAdmin
 exports.crearPedido = crearPedido
 exports.confirmarPedido = confirmarPedido
 exports.verHistorialPedidos = verHistorialPedidos
+exports.verEstadoPedido = verEstadoPedido
