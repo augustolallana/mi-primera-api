@@ -1,11 +1,11 @@
 class Usuario {
-    constructor (username, completeName, email, phoneNumber, adress, password) {
+    constructor (username, completeName, email, phoneNumber, address, password) {
         this.username = username
         this.password = password
         this.completeName = completeName
         this.email = email
         this.phoneNumber = phoneNumber
-        this.adress = adress
+        this.address = address
         this.historialPedidos = []
     }
 }
@@ -19,11 +19,11 @@ class Producto {
 }
 
 class Pedido {
-    constructor (products, quantities, payment, adress, user) {
+    constructor (products, quantities, payment, address, user) {
         this.products = products
         this.quantities = quantities
         this.payment = payment
-        this.adress = adress
+        this.address = address
         this.user = user
         this.date = Date.now()
         this.state = "Pendiente"

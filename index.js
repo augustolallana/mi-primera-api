@@ -46,7 +46,8 @@ server.post("/pedidos/confirmar", mw.estaLogueado, mw.confirmarPedido, (req, res
     res.status(200).json({ mensaje: "Operación realizada con éxito" })
 })
 
-server.put("/pedidos/modificar", mw.estaLogueado, (req, res) => {
+server.put("/pedidos/editar", mw.estaLogueado, mw.editarPedido, (req, res) => {
+    res.status(200).json({ mensaje: "Pedido actualizado con éxito!" })
 })
 
 server.get("/pedidos/historial", mw.estaLogueado, mw.verHistorialPedidos, (req, res) => {

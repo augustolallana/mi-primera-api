@@ -10,7 +10,10 @@ const arrayProductos = arrays.arrayProductos
 const arrayPedidos = arrays.arrayPedidos 
 const arrayMetodosPago = arrays.arrayMetodosPago 
 
+// Middlewares de endpoints de usuario
 
+
+// Validar si algún valor x de un parametro param que pase el usuario para el registro ya existe en los registrados 
 const paramRegistradoRepetido = (param, req) => {
     let paramsRegistrados = arrayUsuarios.map((user) => {
         return user[param]
@@ -24,7 +27,7 @@ const paramRegistradoRepetido = (param, req) => {
 }
 
 const validarDatosRegistro = (req, res, next) => {
-    if (!req.body.username || !req.body.password || !req.body.email || !req.body.adress) {
+    if (!req.body.username || !req.body.password || !req.body.email || !req.body.address) {
         res.status(400).json({ mensaje: "Faltan datos para el registro." })
         return
     }
@@ -39,7 +42,7 @@ const validarDatosRegistro = (req, res, next) => {
         return
     }
     
-    let nuevoUsuario = new Usuario(req.body.username, req.body.completeName, req.body.email, req.body.phoneNumber, req.body.adress, req.body.password)
+    let nuevoUsuario = new Usuario(req.body.username, req.body.completeName, req.body.email, req.body.phoneNumber, req.body.address, req.body.password)
     arrayUsuarios.push(nuevoUsuario)
     
     next()
@@ -65,6 +68,7 @@ const validarDatosLogin = (req, res, next) => {
     next()
 }
 
+// Fijar un header: "user-index" en toda petición al servidor 
 const setHeader = (req, res, next) => {
     req.headers["user-index"] = valorHeader
     next()
@@ -90,8 +94,12 @@ const isAdmin = (req, res, next) => {
     next()
 }
 
+const tienePedidoPendiente = (req) => {
+    return (arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")}) !== -1)
+}
+
 const crearPedido = (req, res, next) => {
-    if ((arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")})) !== -1) {
+    if (tienePedidoPendiente(req)) {
         res.status(400).json({ mensaje: "No puedes crear un nuevo pedido porque tienes otro pendiente por confirmar!" })
         return
     }
@@ -114,36 +122,28 @@ const crearPedido = (req, res, next) => {
         
         productosPedido.push(arrayProductos[nombresProductos.indexOf(req.body.products[i])])
     }
-   
-    let pedido = new Pedido(productosPedido, req.body.quantities || Array.from({length: req.body.products.length}).map(x => 1), req.body.payment || arrayMetodosPago[0].name, req.body.adress || arrayUsuarios[req.headers["user-index"]].adress, req.headers["user-index"])
+    //                      array,          cantidades especificadas o array con todos 1s,                             metodo de pago especificado o el primmero registrado,  dirección especificada o la del registro
+    let pedido = new Pedido(productosPedido, req.body.quantities || Array.from({length: req.body.products.length}).map(x => 1), req.body.payment || arrayMetodosPago[0].name, req.body.address || arrayUsuarios[req.headers["user-index"]].address, req.headers["user-index"])
     arrayPedidos.push(pedido)
     
     next()
 }
 
 const confirmarPedido = (req, res, next) => {
-    let pedidosUsers = arrayPedidos.map((pedido) => {
-        return pedido.user
-    })
-
-    if (!pedidosUsers.includes(req.headers["user-index"])) {
-        res.status(404).json({ mensaje: "Todavía no has realizado ningún pedido" })
-        return
-    }
-
-    if (arrayPedidos[pedidosUsers.lastIndexOf(req.headers["user-index"])].state !== "Pendiente") {
+    if (!tienePedidoPendiente(req)) {
         res.status(404).json({ mensaje: "No tienes pedidos por confirmar" })
         return
-    }
-    
-    arrayPedidos[pedidosUsers.lastIndexOf(req.headers["user-index"])].state = "Confirmado"
-    arrayUsuarios[req.headers["user-index"]].historialPedidos.push(arrayPedidos[pedidosUsers.lastIndexOf(req.headers["user-index"])])
+    } else {
+        let indexPedido = arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")})
+        arrayPedidos[indexPedido].state = "Confirmado"
+        arrayUsuarios[req.headers["user-index"]].historialPedidos.push(arrayPedidos[indexPedido])
 
-    next()
+        next()
+    }
 }
 
 const verHistorialPedidos = (req, res, next) => {
-    // Evaluar si el usuario tiene 
+    // Evaluar si el usuario tiene pedidos concretados
     if (arrayUsuarios[req.headers["user-index"]].historialPedidos.length === 0) {
         res.status(200).json({ mensaje: "Aún no has concretado ningún pedido." })
         return
@@ -163,14 +163,51 @@ const verEstadoPedido = (req, res, next) => {
         return
     }
     
-    // Evaluar si el usuario tiene pedido pendiente
-    if (arrayUsuarios[req.headers["user-index"]].historialPedidos.length === 0 || arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")}) !== -1) {
+    if (tienePedidoPendiente(req)) {
         res.status(200).json({ mensaje: "El estado de tu pedido es Pendiente"})
         return
     }
 
     next()
 }
+
+/*
+
+const actualizarAutor = (req, res, next) => {
+    let original = autoresArray[parseInt(req.params.id)]
+    let aActualizar = req.body
+    let aActualizarKeys = Object.keys(req.body)
+    
+    for (let i = 0; i < aActualizarKeys.length; i++) { 
+        let cambio = aActualizarKeys[i]
+        original[cambio] = aActualizar[cambio]
+    }
+    
+    next();
+}
+
+*/
+
+const editarPedido = (req, res, next) => {
+    if (!tienePedidoPendiente(req)) {
+        res.status(400).json({ mensaje: "Sólo puedes editar los pedidos pendientes!" })
+        return
+    }
+
+    // Se sobreentiende que no se va a intentar pasar keys que no exitan en el pedido y por tanto no se puedan modificar los valores
+    let pedidoOriginal = arrayPedidos[arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")})]
+    let actualizacionKeys = Object.keys(req.body)
+
+    for (let i = 0; i < actualizacionKeys.length; i++) {
+        let cambio = actualizacionKeys[i]
+        pedidoOriginal[cambio] = req.body[cambio]
+    }
+
+    next()
+}
+
+
+// Middlewares de endpoints de admin
 
 exports.valorHeader = valorHeader
 exports.arrayUsuarios = arrayUsuarios
@@ -186,3 +223,4 @@ exports.crearPedido = crearPedido
 exports.confirmarPedido = confirmarPedido
 exports.verHistorialPedidos = verHistorialPedidos
 exports.verEstadoPedido = verEstadoPedido
+exports.editarPedido = editarPedido
