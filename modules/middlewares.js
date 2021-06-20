@@ -171,23 +171,6 @@ const verEstadoPedido = (req, res, next) => {
     next()
 }
 
-/*
-
-const actualizarAutor = (req, res, next) => {
-    let original = autoresArray[parseInt(req.params.id)]
-    let aActualizar = req.body
-    let aActualizarKeys = Object.keys(req.body)
-    
-    for (let i = 0; i < aActualizarKeys.length; i++) { 
-        let cambio = aActualizarKeys[i]
-        original[cambio] = aActualizar[cambio]
-    }
-    
-    next();
-}
-
-*/
-
 const editarPedido = (req, res, next) => {
     if (!tienePedidoPendiente(req)) {
         res.status(400).json({ mensaje: "Sólo puedes editar los pedidos pendientes!" })
