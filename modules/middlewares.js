@@ -1,4 +1,4 @@
-const classes = require("./classes")
+ classes = require("./classes")
 const Usuario = classes.Usuario
 const Producto = classes.Producto
 const Pedido = classes.Pedido
@@ -11,7 +11,6 @@ const arrayPedidos = arrays.arrayPedidos
 const arrayMetodosPago = arrays.arrayMetodosPago 
 
 // Middlewares de endpoints de usuario
-
 
 // Validar si algún valor x de un parametro param que pase el usuario para el registro ya existe en los registrados 
 const paramRegistradoRepetido = (param, req) => {
@@ -77,7 +76,7 @@ const setHeader = (req, res, next) => {
 const estaLogueado = (req, res, next) => {
     if (!req.headers["user-index"]) {
         if (req.headers["user-index"] !== 0) {
-            res.status(401).json({ mensaje: "Debe estar logueado para realizar esta operacion"})
+            res.status(401).json({ mensaje: "Debe estar logueado para realizar esta operacion" })
             return
         }
     }
@@ -87,7 +86,7 @@ const estaLogueado = (req, res, next) => {
 
 const isAdmin = (req, res, next) => {
     if (!arrayUsuarios[req.headers["user-index"]].isAdmin) {
-        res.status(401).json({ mensaje: "Necesita permisos de administrador para realizar esta tarea"})
+        res.status(401).json({ mensaje: "Necesita permisos de administrador para realizar esta tarea" })
         return
     }
     
@@ -116,7 +115,7 @@ const crearPedido = (req, res, next) => {
 
     for (let i = 0; i < req.body.products.length; i++) {
         if (!nombresProductos.includes(req.body.products[i])) {
-            res.status(400).json({ mensaje: `Actualmente no tenemos ${req.body.products[i]} en el menú. Debes realizar el pedido nuevamente.`})
+            res.status(400).json({ mensaje: `Actualmente no tenemos ${req.body.products[i]} en el menú. Debes realizar el pedido nuevamente.` })
             return
         }
         
@@ -133,6 +132,7 @@ const confirmarPedido = (req, res, next) => {
     if (!tienePedidoPendiente(req)) {
         res.status(404).json({ mensaje: "No tienes pedidos por confirmar" })
         return
+
     } else {
         let indexPedido = arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")})
         arrayPedidos[indexPedido].state = "Confirmado"
@@ -154,20 +154,16 @@ const verHistorialPedidos = (req, res, next) => {
 
 
 const verEstadoPedido = (req, res, next) => {
-    let pedidosUsers = arrayPedidos.map((pedido) => {
-        return pedido.user
-    })
-
-    if (!pedidosUsers.includes(req.headers["user-index"])) {
+    if (arrayPedidos.findIndex((pedido) => {return pedido.user === req.headers["user-index"]}) === -1) {
         res.status(404).json({ mensaje: "Todavía no has realizado ningún pedido" })
+        return
+    } 
+    
+    if (tienePedidoPendiente(req)) {
+        res.status(200).json({ mensaje: "El estado de tu pedido es Pendiente" })
         return
     }
     
-    if (tienePedidoPendiente(req)) {
-        res.status(200).json({ mensaje: "El estado de tu pedido es Pendiente"})
-        return
-    }
-
     next()
 }
 
@@ -177,7 +173,7 @@ const editarPedido = (req, res, next) => {
         return
     }
 
-    // Se sobreentiende que no se va a intentar pasar keys que no exitan en el pedido y por tanto no se puedan modificar los valores
+    // Se sobreentiende que no se va a intentar pasar keys que no existan en el pedido y por tanto no se puedan modificar los valores
     let pedidoOriginal = arrayPedidos[arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")})]
     let actualizacionKeys = Object.keys(req.body)
 
@@ -192,6 +188,105 @@ const editarPedido = (req, res, next) => {
 
 // Middlewares de endpoints de admin
 
+const agregarProducto = (req, res, next) => {
+    if (!req.body.name || !req.body.price) {
+        res.status(400).json({ mensaje: "Faltan datos para crear el producto" })
+        return
+    }
+    if (arrayProductos.findIndex((producto) => producto.name === req.body.name) !== -1) {
+        res.status(400).json({ mensaje: `El producto ${req.body.name} ya se encuentra registrado` })
+    }
+
+    let producto = new Producto(req.body.name, req.body.price, req.body.photo)
+    arrayProductos.push(producto)
+    
+    next()
+}
+
+const editarProducto = (req, res, next) => {
+    let indexProducto = arrayProductos.findIndex((producto) => producto.name === req.params.name) 
+    if (indexProducto === -1) {
+        res.status(400).json({ mensaje: `${req.params.name} no corresponde con ningún producto registrado` })
+        return
+    }
+    
+    let productoOriginal = arrayProductos[indexProducto]
+    let actualizacionKeys = Object.keys(req.body)
+
+    for (let i = 0; i < actualizacionKeys.length; i++) {
+        let cambio = actualizacionKeys[i]
+        productoOriginal[cambio] = req.body[cambio]
+    }
+
+    next()
+}
+
+const eliminarProducto = (req, res, next) => {
+    let indexProducto = arrayProductos.findIndex((producto) => producto.name === req.params.name) 
+    if (indexProducto === -1) {
+        res.status(400).json({ mensaje: `${req.params.name} no corresponde con ningún producto registrado` })
+        return
+    }
+
+    arrayProductos.splice(indexProducto, 1)
+    
+    next()
+}
+
+const cambiarEstadoPedidos = (req, res, next) => {
+    
+}
+
+const crearMedioPago = (req, res, next) => {
+    if (!req.body.name) {
+        res.status(400).json({ mensaje: "Falta el nombre para crear el medio de pago" })
+        return
+    }
+
+    if (arrayMetodosPago.findIndex((metodo) => metodo.name === req.body.name) !== -1) {
+        res.status(400).json({ mensaje: `El metodo de pago ${req.body.name} ya se encuentra registrado`})
+        return
+    }
+
+    let metodoPago = new MetodoPago(req.body.name)
+    arrayMetodosPago.push(metodoPago)
+
+    next()
+}
+
+const editarMedioPago = (req, res, next) => {
+    let indexMetodo = arrayMetodosPago.findIndex((metodo) => metodo.name === req.params.name) 
+    if (indexMetodo === -1) {
+        res.status(400).json({ mensaje: `${req.params.name} no corresponde con ningún medio de pago registrado` })
+        return
+    }
+    
+    let metodoOriginal = arrayMetodosPago[indexMetodo]
+    let actualizacionKeys = Object.keys(req.body)
+
+    for (let i = 0; i < actualizacionKeys.length; i++) {
+        let cambio = actualizacionKeys[i]
+        metodoOriginal[cambio] = req.body[cambio]
+    }
+
+    next()
+}
+
+const eliminarMedioPago = (req, res, next) => {
+    let indexMetodo = arrayMetodosPago.findIndex((metodo) => metodo.name === req.params.name) 
+    if (indexMetodo === -1) {
+        res.status(400).json({ mensaje: `${req.params.name} no corresponde con ningún medio de pago registrado` })
+        return
+    }
+
+    arrayMetodosPago.splice(indexMetodo, 1)
+    
+    next()
+}
+
+
+
+// Exports
 exports.valorHeader = valorHeader
 exports.arrayUsuarios = arrayUsuarios
 exports.arrayProductos = arrayProductos
@@ -207,3 +302,9 @@ exports.confirmarPedido = confirmarPedido
 exports.verHistorialPedidos = verHistorialPedidos
 exports.verEstadoPedido = verEstadoPedido
 exports.editarPedido = editarPedido
+exports.agregarProducto = agregarProducto
+exports.editarProducto = editarProducto
+exports.eliminarProducto = eliminarProducto
+exports.crearMedioPago = crearMedioPago
+exports.editarMedioPago = editarMedioPago
+exports.eliminarMedioPago = eliminarMedioPago

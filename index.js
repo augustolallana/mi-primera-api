@@ -14,7 +14,7 @@ const server = express()
 const PORT = 5000
 
 const logger = (req, res, next) => {
-    console.log(`Path: ${req.path} - Method: ${req.method} - Headers: ${JSON.stringify(req.headers["user-index"])} - Query: ${JSON.stringify(req.query)}`);
+    console.log(`Path: ${req.path} - Method: ${req.method} - Headers["user-index"]: ${JSON.stringify(req.headers["user-index"])}`);
     next();
 }
 
@@ -23,6 +23,7 @@ server.use(mw.setHeader)
 server.use(logger)
 
 
+// Signup - Login
 server.post("/signup", mw.validarDatosRegistro, (req, res) => {
     res.status(201).json({ mensaje: "Usuario creado con éxito" })
 })
@@ -39,11 +40,11 @@ server.get("/productos", mw.estaLogueado, (req, res) => {
 
 // Endpoints: Usuario
 server.post("/pedidos/crear", mw.estaLogueado, mw.crearPedido, (req, res) => {
-    res.status(200).json({ mensaje: "Operación realizada con éxito" })
+    res.status(200).json({ mensaje: "Pedido creado con éxito" })
 })
 
 server.post("/pedidos/confirmar", mw.estaLogueado, mw.confirmarPedido, (req, res) => {
-    res.status(200).json({ mensaje: "Operación realizada con éxito" })
+    res.status(200).json({ mensaje: "Pedido confirmado con éxito" })
 })
 
 server.put("/pedidos/editar", mw.estaLogueado, mw.editarPedido, (req, res) => {
@@ -60,13 +61,16 @@ server.get("/pedidos/estado", mw.estaLogueado, mw.verEstadoPedido, (req, res) =>
 
 
 // Endpoints: Admin
-server.post("/productos", mw.estaLogueado, mw.isAdmin, (req, res) => {
+server.post("/productos", mw.estaLogueado, mw.isAdmin, mw.agregarProducto, (req, res) => {
+    res.status(200).json({ mensaje: "Producto agregado con éxito" })
 })
 
-server.put("/productos", mw.estaLogueado, mw.isAdmin, (req, res) => {
+server.put("/productos/:name", mw.estaLogueado, mw.isAdmin, mw.editarProducto, (req, res) => {
+    res.status(200).json({ mensaje: "Producto editado con éxito" })
 })
 
-server.delete("/productos", mw.estaLogueado, mw.isAdmin, (req, res) => {
+server.delete("/productos/:name", mw.estaLogueado, mw.isAdmin, mw.eliminarProducto, (req, res) => {
+    res.status(200).json({ mensaje: "Producto eliminado con éxito" })
 })
 
 server.get("/pedidos", mw.estaLogueado, mw.isAdmin, (req, res) => {
@@ -80,13 +84,16 @@ server.get("/medios-pago", mw.estaLogueado, mw.isAdmin, (req, res) => {
     res.status(200).json(arrayMetodosPago)
 })
 
-server.post("/medios-pago", mw.estaLogueado, mw.isAdmin, (req, res) => {
+server.post("/medios-pago", mw.estaLogueado, mw.isAdmin, mw.crearMedioPago, (req, res) => {
+    res.status(200).json({ mensaje: "Medio creado con éxito" })
 })
 
-server.put("/medios-pago", mw.estaLogueado, mw.isAdmin, (req, res) => {
+server.put("/medios-pago/:name", mw.estaLogueado, mw.isAdmin, mw.editarMedioPago, (req, res) => {
+    res.status(200).json({ mensaje: "Medio editado con éxito" })
 })
 
-server.delete("/medios-pago", mw.estaLogueado, mw.isAdmin, (req, res) => {
+server.delete("/medios-pago/:name", mw.estaLogueado, mw.isAdmin, mw.eliminarMedioPago, (req, res) => {
+    res.status(200).json({ mensaje: "Medio eliminado con éxito" })
 })
 
 
