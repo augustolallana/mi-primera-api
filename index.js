@@ -24,12 +24,12 @@ server.use(logger)
 
 
 // Signup - Login
-server.post("/signup", mw.validarDatosRegistro, (req, res) => {
+server.post("/usuarios", mw.validarDatosRegistro, (req, res) => {
     res.status(201).json({ mensaje: "Usuario creado con éxito" })
 })
 
 server.post("/login", mw.validarDatosLogin, (req, res) => {
-    res.status(200).json({ mensaje: `Usuario logueado con éxito. Id: ${arrayUsuarios.findIndex((usuario) => {return usuario.username === req.body.username})}`})
+    res.status(201).json({ mensaje: `Usuario logueado con éxito. Id: ${arrayUsuarios.findIndex((usuario) => {return usuario.username === req.body.username})}`})
 })
 
 // Endpoints: Admin / Usuario
@@ -74,7 +74,11 @@ server.delete("/productos/:name", mw.estaLogueado, mw.isAdmin, mw.eliminarProduc
 })
 
 server.get("/pedidos", mw.estaLogueado, mw.isAdmin, (req, res) => {
-    res.status(200).json(arrayPedidos)
+    res.status(200).json(arrayPedidos.sort((a, b) => a.user - b.user))
+})
+
+server.get("/pedidos/:user", mw.estaLogueado, mw.isAdmin, mw.verPedidosPorUser, (req, res) => {
+    res.status(200).json(arrayPedidos.filter((pedido) => pedido.user === req.headers["user-index"]))
 })
 
 server.put("/pedidos", mw.estaLogueado, mw.isAdmin, (req, res) => {

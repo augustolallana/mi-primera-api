@@ -1,11 +1,11 @@
 class Usuario {
     constructor (username, completeName, email, phoneNumber, address, password) {
         this.username = username
-        this.password = password
         this.completeName = completeName
         this.email = email
         this.phoneNumber = phoneNumber
         this.address = address
+        this.password = password
         this.historialPedidos = []
     }
 }

@@ -12,35 +12,22 @@ const arrayMetodosPago = arrays.arrayMetodosPago
 
 // Middlewares de endpoints de usuario
 
-// Validar si algún valor x de un parametro param que pase el usuario para el registro ya existe en los registrados 
-const paramRegistradoRepetido = (param, req) => {
-    let paramsRegistrados = arrayUsuarios.map((user) => {
-        return user[param]
-    })
-
-    if (paramsRegistrados.includes(req.body[param])) {
-        return true
-    }
-
-    return false
-}
-
 const validarDatosRegistro = (req, res, next) => {
     if (!req.body.username || !req.body.password || !req.body.email || !req.body.address) {
         res.status(400).json({ mensaje: "Faltan datos para el registro." })
         return
     }
     
-    if (paramRegistradoRepetido("email", req)) {
-        res.status(400).json({ mensaje: "El mail colocado ya está registrado." })
-        return
-    }
-    
-    if (paramRegistradoRepetido("username", req)) {
+    if (arrayUsuarios.find((usuario) => usuario.username === req.body.username)) {
         res.status(400).json({ mensaje: "El nombre de usuario colocado ya está registrado." })
         return
     }
     
+    if (arrayUsuarios.find((usuario) => usuario.email === req.body.email)) {
+        res.status(400).json({ mensaje: "El mail colocado ya está registrado." })
+        return
+    }
+
     let nuevoUsuario = new Usuario(req.body.username, req.body.completeName, req.body.email, req.body.phoneNumber, req.body.address, req.body.password)
     arrayUsuarios.push(nuevoUsuario)
     
@@ -54,16 +41,16 @@ const validarDatosLogin = (req, res, next) => {
         return
     }
     
-    let user = arrayUsuarios.findIndex((user) => {
+    let userIndex = arrayUsuarios.findIndex((user) => {
         return (user.username === req.body.username) && (user.password === req.body.password)
     })
 
-    if (user === -1) {
+    if (userIndex === -1) {
         res.status(401).json({ mensaje: "Credenciales inválidas" })
         return
     }
 
-    valorHeader = user
+    valorHeader = userIndex
     next()
 }
 
@@ -121,11 +108,21 @@ const crearPedido = (req, res, next) => {
         
         productosPedido.push(arrayProductos[nombresProductos.indexOf(req.body.products[i])])
     }
-    //                      array,          cantidades especificadas o array con todos 1s,                             metodo de pago especificado o el primmero registrado,  dirección especificada o la del registro
+    
     let pedido = new Pedido(productosPedido, req.body.quantities || Array.from({length: req.body.products.length}).map(x => 1), req.body.payment || arrayMetodosPago[0].name, req.body.address || arrayUsuarios[req.headers["user-index"]].address, req.headers["user-index"])
+    pedido.id = arrayPedidos.length
     arrayPedidos.push(pedido)
     
     next()
+}
+
+const calcularPrecioPedido = (pedido) => {
+    let precio = 0
+    for (let i = 0; i < pedido.products.length; i++) {
+        precio += pedido.products[i].price * pedido.quantities[i]
+    }
+
+    return precio
 }
 
 const confirmarPedido = (req, res, next) => {
@@ -136,6 +133,7 @@ const confirmarPedido = (req, res, next) => {
     } else {
         let indexPedido = arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")})
         arrayPedidos[indexPedido].state = "Confirmado"
+        arrayPedidos[indexPedido].price = calcularPrecioPedido(arrayPedidos[indexPedido])
         arrayUsuarios[req.headers["user-index"]].historialPedidos.push(arrayPedidos[indexPedido])
 
         next()
@@ -172,10 +170,28 @@ const editarPedido = (req, res, next) => {
         res.status(400).json({ mensaje: "Sólo puedes editar los pedidos pendientes!" })
         return
     }
-
-    // Se sobreentiende que no se va a intentar pasar keys que no existan en el pedido y por tanto no se puedan modificar los valores
+    
     let pedidoOriginal = arrayPedidos[arrayPedidos.findIndex((pedido) => {return (pedido.user === req.headers["user-index"]) && (pedido.state === "Pendiente")})]
     let actualizacionKeys = Object.keys(req.body)
+    
+    if (req.body.products) {
+        let nombresProductos = arrayProductos.map((producto) => {
+            return producto.name
+        })
+
+        let productosPedido = []
+        for (let i = 0; i < req.body.products.length; i++) {
+            if (!nombresProductos.includes(req.body.products[i])) {
+                res.status(400).json({ mensaje: `Actualmente no tenemos ${req.body.products[i]} en el menú. No se pudo actualizar el pedido.` })
+                return
+            }
+            
+            productosPedido.push(arrayProductos[nombresProductos.indexOf(req.body.products[i])])
+        }
+
+        arrayPedidos[arrayPedidos.findIndex((pedido) => {return pedido.user === req.headers["user-index"] && pedido.state === "Pendiente"})].products = productosPedido
+        actualizacionKeys.splice(actualizacionKeys.indexOf((key) => key === "products"), 1)
+    }
 
     for (let i = 0; i < actualizacionKeys.length; i++) {
         let cambio = actualizacionKeys[i]
@@ -230,6 +246,15 @@ const eliminarProducto = (req, res, next) => {
 
     arrayProductos.splice(indexProducto, 1)
     
+    next()
+}
+
+const verPedidosPorUser = (req, res, next) => {
+    if (!arrayUsuarios[req.headers["user-index"]]) {
+        res.status(400).json({ mensaje: "El id de usuario no es un id válido" })
+        return
+    }
+
     next()
 }
 
@@ -305,6 +330,7 @@ exports.editarPedido = editarPedido
 exports.agregarProducto = agregarProducto
 exports.editarProducto = editarProducto
 exports.eliminarProducto = eliminarProducto
+exports.verPedidosPorUser = verPedidosPorUser
 exports.crearMedioPago = crearMedioPago
 exports.editarMedioPago = editarMedioPago
 exports.eliminarMedioPago = eliminarMedioPago
