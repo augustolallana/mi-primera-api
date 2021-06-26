@@ -209,8 +209,10 @@ const agregarProducto = (req, res, next) => {
         res.status(400).json({ mensaje: "Faltan datos para crear el producto" })
         return
     }
+
     if (arrayProductos.findIndex((producto) => producto.name === req.body.name) !== -1) {
         res.status(400).json({ mensaje: `El producto ${req.body.name} ya se encuentra registrado` })
+        return
     }
 
     let producto = new Producto(req.body.name, req.body.price, req.body.photo)
