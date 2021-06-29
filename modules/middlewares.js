@@ -95,6 +95,13 @@ const crearPedido = (req, res, next) => {
         return
     }
 
+    if (req.body.quantities) {
+        if (req.body.products.length !== req.body.quantities.length) {
+            res.status(400).json({ mensaje: "Las cantidades especificadas no coinciden con la cantidad de productos seleccionados. Realice el pedido nuevamente" })
+            return
+        }
+    }
+
     let productosPedido = []
     let nombresProductos = arrayProductos.map((producto) => {
         return producto.name
@@ -109,7 +116,7 @@ const crearPedido = (req, res, next) => {
         productosPedido.push(arrayProductos[nombresProductos.indexOf(req.body.products[i])])
     }
     
-    let pedido = new Pedido(productosPedido, req.body.quantities || Array.from({length: req.body.products.length}).map(x => 1), req.body.payment || arrayMetodosPago[0].name, req.body.address || arrayUsuarios[req.headers["user-index"]].address, req.headers["user-index"])
+    let pedido = new Pedido(productosPedido, req.body.quantities || Array.from({length: req.body.products.length}).map(p => 1), req.body.payment || arrayMetodosPago[0].name, req.body.address || arrayUsuarios[req.headers["user-index"]].address, req.headers["user-index"])
     pedido.id = arrayPedidos.length
     arrayPedidos.push(pedido)
     
@@ -252,7 +259,7 @@ const eliminarProducto = (req, res, next) => {
 }
 
 const verPedidosPorUser = (req, res, next) => {
-    if (!arrayUsuarios[req.headers["user-index"]]) {
+    if (!arrayUsuarios[req.params.user]) {
         res.status(400).json({ mensaje: "El id de usuario no es un id válido" })
         return
     }
@@ -260,8 +267,34 @@ const verPedidosPorUser = (req, res, next) => {
     next()
 }
 
-const cambiarEstadoPedidos = (req, res, next) => {
+const editarEstadoPedidos = (req, res, next) => {
+    if (!req.body.state) {
+        res.status(400).json({ mensaje: "Debes indicar el nuevo estado" })
+        return
+    }
     
+    let pedido = arrayPedidos[req.params.id]
+
+    if (!pedido) {
+        res.status(400).json({ mensaje: "El id del pedido ingresado es inválido." })
+        return
+    }
+
+    if (pedido.state === "Pendiente") {
+        res.status(400).json({ mensaje: "No puedes modificar el estado de este pedido porque el usuario todavía no lo confirmó" })
+        return
+    }
+
+    let estadosValidos = ["En preparacion", "Enviado", "Entregado", "Cancelado"]
+
+    if (!estadosValidos.includes(req.body.state)) {
+        res.status(400).json({ mensaje: "El estado indicado no es válido." })
+        return
+    }
+
+    pedido.state = req.body.state
+
+    next()
 }
 
 const crearMedioPago = (req, res, next) => {
@@ -333,6 +366,7 @@ exports.agregarProducto = agregarProducto
 exports.editarProducto = editarProducto
 exports.eliminarProducto = eliminarProducto
 exports.verPedidosPorUser = verPedidosPorUser
+exports.editarEstadoPedidos = editarEstadoPedidos
 exports.crearMedioPago = crearMedioPago
 exports.editarMedioPago = editarMedioPago
 exports.eliminarMedioPago = eliminarMedioPago

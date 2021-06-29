@@ -78,10 +78,11 @@ server.get("/pedidos", mw.estaLogueado, mw.isAdmin, (req, res) => {
 })
 
 server.get("/pedidos/:user", mw.estaLogueado, mw.isAdmin, mw.verPedidosPorUser, (req, res) => {
-    res.status(200).json(arrayPedidos.filter((pedido) => pedido.user === req.headers["user-index"]))
+    res.status(200).json(arrayPedidos.filter((pedido) => String(pedido.user) === req.params.user))
 })
 
-server.put("/pedidos", mw.estaLogueado, mw.isAdmin, (req, res) => {
+server.put("/pedidos/:id", mw.estaLogueado, mw.isAdmin, mw.editarEstadoPedidos, (req, res) => {
+    res.status(200).json({ mensaje: "Estado del pedido actualizado con éxito" })
 })
 
 server.get("/medios-pago", mw.estaLogueado, mw.isAdmin, (req, res) => {
