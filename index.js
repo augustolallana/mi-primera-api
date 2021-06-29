@@ -13,14 +13,9 @@ const arrayMetodosPago = mw.arrayMetodosPago
 const server = express()
 const PORT = 5000
 
-const logger = (req, res, next) => {
-    console.log(`Path: ${req.path} - Method: ${req.method} - Headers["user-index"]: ${JSON.stringify(req.headers["user-index"])}`);
-    next();
-}
 
 server.use(express.json())
 server.use(mw.setHeader)
-server.use(logger)
 
 
 // Signup - Login
