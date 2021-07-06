@@ -86,7 +86,7 @@ const tienePedidoPendiente = (req) => {
 
 const crearPedido = (req, res, next) => {
     if (tienePedidoPendiente(req)) {
-        res.status(400).json({ mensaje: "No puedes crear un nuevo pedido porque tienes otro pendiente por confirmar!" })
+        res.status(409).json({ mensaje: "No puedes crear un nuevo pedido porque tienes otro pendiente por confirmar!" })
         return
     }
 
@@ -150,7 +150,7 @@ const confirmarPedido = (req, res, next) => {
 const verHistorialPedidos = (req, res, next) => {
     // Evaluar si el usuario tiene pedidos concretados
     if (arrayUsuarios[req.headers["user-index"]].historialPedidos.length === 0) {
-        res.status(200).json({ mensaje: "Aún no has concretado ningún pedido." })
+        res.status(404).json({ mensaje: "Aún no has concretado ningún pedido." })
         return
     }
 
@@ -174,7 +174,7 @@ const verEstadoPedido = (req, res, next) => {
 
 const editarPedido = (req, res, next) => {
     if (!tienePedidoPendiente(req)) {
-        res.status(400).json({ mensaje: "Sólo puedes editar los pedidos pendientes!" })
+        res.status(404).json({ mensaje: "Sólo puedes editar los pedidos pendientes!" })
         return
     }
     
@@ -317,7 +317,7 @@ const crearMedioPago = (req, res, next) => {
 const editarMedioPago = (req, res, next) => {
     let indexMetodo = arrayMetodosPago.findIndex((metodo) => metodo.name === req.params.name) 
     if (indexMetodo === -1) {
-        res.status(400).json({ mensaje: `${req.params.name} no corresponde con ningún medio de pago registrado` })
+        res.status(404).json({ mensaje: `${req.params.name} no corresponde con ningún medio de pago registrado` })
         return
     }
     
