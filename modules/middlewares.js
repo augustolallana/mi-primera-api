@@ -19,12 +19,12 @@ const validarDatosRegistro = (req, res, next) => {
     }
     
     if (arrayUsuarios.find((usuario) => usuario.username === req.body.username)) {
-        res.status(400).json({ mensaje: "El nombre de usuario colocado ya está registrado." })
+        res.status(403).json({ mensaje: "El nombre de usuario colocado ya está registrado." })
         return
     }
     
     if (arrayUsuarios.find((usuario) => usuario.email === req.body.email)) {
-        res.status(400).json({ mensaje: "El mail colocado ya está registrado." })
+        res.status(403).json({ mensaje: "El mail colocado ya está registrado." })
         return
     }
 
